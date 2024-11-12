@@ -1,0 +1,100 @@
+---
+title: "Лабораторна робота №6. Побудова моделей класифікації"
+author: "[Дерикон. А. В.](https://github.com/Artem418k), `r format(Sys.time(), '%Y')`"
+date: "`r Sys.Date()`"
+output:
+#   pdf_document:
+#     highlight: tango
+#     toc: yes
+#   word_document:
+#     highlight: tango
+#     toc: yes
+  html_notebook:
+    toc: yes # генерація змісту документу
+    toc_float: true
+    highlight: pygments # Колір підсвічування коду
+fontsize: 12pt # розмір шрифту
+header-includes:
+ \usepackage[T2A]{fontenc}
+ \usepackage[utf8]{inputenc}
+editor_options: 
+  chunk_output_type: console # вивід результатів обчислень на консоль
+---
+
+__Мета:__ _Засвоєння базових принципів, знайомство з інструментами та набуття навичок побудови, eкспорту та імпорту моделей класифікації на рівні технології на основі статистичного підходу та моделей машинного навчання засобами мови програмування R та за допомогою універсального інтерфейсу доступа до функцій машинного навчання пакета `caret`._ 
+
+### Індивідуальні завдання на лабораторну роботу
+
+```{r}
+# Завантажуємо необхідні бібліотеки
+library(tidyverse)
+library(palmerpenguins)
+library(MASS)  # для LDA
+library(caret)  # для кросс-валідації
+
+# 1. Завантажуємо дані penguins
+data("penguins")
+
+# Очищаємо дані (видаляємо пропущені значення)
+penguins_clean <- penguins %>%
+  drop_na() %>%
+  dplyr::select(sex, flipper_length_mm, body_mass_g)
+
+# Перетворюємо стовпець sex на фактор
+penguins_clean$sex <- factor(penguins_clean$sex)
+
+# Перевіряємо результат
+str(penguins_clean)
+
+# 2.Розбиваємо дані на навчальну та тестову вибірки
+set.seed(123)  # Фіксуємо випадкове насіння для відтворюваності
+train_index <- createDataPartition(penguins_clean$sex, p = 0.8, list = FALSE)
+
+train_data <- penguins_clean[train_index, ]
+test_data <- penguins_clean[-train_index, ]
+
+# Перевірка розмірів вибірок
+dim(train_data)
+dim(test_data)
+
+# 3. Кросс-валідація для моделі LDA
+ctrl <- trainControl(method = "cv", number = 10)  # 10-кратна кросс-валідація
+
+lda_model <- train(sex ~ flipper_length_mm + body_mass_g, 
+                   data = train_data, 
+                   method = "lda", 
+                   trControl = ctrl)
+
+# Переглядаємо результати кросс-валідації
+print(lda_model)
+
+# 4. Побудова моделі LDA
+lda_final_model <- lda(sex ~ flipper_length_mm + body_mass_g, data = train_data)
+
+# Перевіряємо структуру моделі
+str(lda_final_model)
+
+# Збереження моделі в файл
+saveRDS(lda_final_model, file = "lda_penguins_model.rds")
+
+# Завантаження моделі (якщо потрібно)
+# loaded_model <- readRDS("lda_penguins_model.rds")
+
+# Виконуємо передбачення на тестових даних
+predictions <- predict(lda_final_model, newdata = test_data)
+
+# Створюємо таблицю для порівняння реальних та передбачених значень
+comparison <- data.frame(Actual = test_data$sex, Predicted = predictions$class)
+
+# Переглядаємо таблицю
+head(comparison)
+
+# Оцінка точності класифікації
+accuracy <- mean(comparison$Actual == comparison$Predicted)
+print(paste("Точність класифікації: ", round(accuracy, 4)))
+
+# Трансформуємо модель у набір символів
+model_output <- capture.output(lda_final_model)
+writeLines(model_output, "lda_model_output.txt")
+
+```
