@@ -1,0 +1,40 @@
+---
+title: "Diamonds distribution dashboard"
+author: "[Дерикон А. В](https://github.com/Artem418k), `r format(Sys.time(), '%Y')`"
+date: "`r Sys.Date()`"
+output: flexdashboard::flex_dashboard
+---
+
+```{r}
+suppressPackageStartupMessages({
+  library(ggplot2)
+  library(dplyr)
+  knitr::opts_chunk$set(fig.width = 5, fig.asp = 0.3)
+})
+```
+
+```{r}
+ggplot(data = diamonds, mapping = aes(x = carat)) + 
+  geom_histogram(binwidth = 0.1, fill = "steelblue", color = "white") + 
+  labs(title = "Distribution of Carat")
+```
+```{r}
+ggplot(data = diamonds, aes(x = cut)) + 
+  geom_bar(fill = "coral") + 
+  labs(title = "Counts of Each Cut Type")
+```
+```{r}
+ggplot(data = diamonds, aes(x = color)) + 
+  geom_bar(fill = "lightgreen") + 
+  labs(title = "Distribution by Diamond Color")
+```
+```{r}
+diamonds %>%
+  arrange(desc(carat)) %>%
+  slice_head(n = 100) %>%
+  select(carat, cut, color, price) %>%
+  DT::datatable(options = list(pageLength = 10), rownames = FALSE)
+```
+
+
+
