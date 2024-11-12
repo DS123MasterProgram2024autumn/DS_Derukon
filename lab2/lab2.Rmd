@@ -1,0 +1,194 @@
+---
+title: "Lab_2_Derukon"
+date: "12/11/2024"
+output:
+#   pdf_document:
+#     highlight: tango
+#     toc: yes
+#   word_document:
+#     highlight: tango
+#     toc: yes
+  html_notebook:
+    toc: yes # генерація змісту документу
+    toc_float: true
+    highlight: tango # Колір підсвічування коду
+fontsize: 12pt # розмір шрифту
+header-includes:
+ \usepackage[T2A]{fontenc}
+ \usepackage[utf8]{inputenc}
+editor_options: 
+  chunk_output_type: console # вивід результатів обчислень на консоль
+---
+
+```{r setup, include=FALSE}
+# Встановлюємо налаштування для RMarkdown
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+
+# Завантаження необхідних бібліотек
+library(dplyr)
+library(ggplot2)
+library(knitr)  # Додаємо бібліотеку для kable
+```
+
+```{r}
+# Cайт:  https://alerts.in.ua/
+# Даннi по Повiтрянним Тревогам по Українi за 2023 роки
+data_list <- list(
+  `January` = data.frame(
+    Region = c("Vinnytsia", "Volyn", "Dnipropetrovsk", "Donetsk", "Zhytomyr", "Zakarpattia", "Zaporizhzhia", "Ivano-Frankivsk", "Kyiv", "Kirovohrad", "Lviv", "Mykolaiv", "Odesa", "Poltava", "Rivne", "Sumy", "Ternopil", "Kharkiv", "Kherson", "Khmelnytskyi ", "Cherkasy ", "Chernivtsi ", "Chernihiv"),
+    Alarm = c(15, 16, 102, 118, 17, 13, 106, 13, 18, 49, 13, 41, 23, 77, 15, 44, 13, 115, 43, 13, 26, 13, 13)
+  ),
+  `February` = data.frame(
+    Region = c("Vinnytsia", "Volyn", "Dnipropetrovsk", "Donetsk", "Zhytomyr", "Zakarpattia", "Zaporizhzhia", "Ivano-Frankivsk", "Kyiv", "Kirovohrad", "Lviv", "Mykolaiv", "Odesa", "Poltava", "Rivne", "Sumy", "Ternopil", "Kharkiv", "Kherson", "Khmelnytskyi ", "Cherkasy ", "Chernivtsi ", "Chernihiv"),
+    Alarm = c(23, 19, 110, 143, 21, 18, 101, 18, 27, 49, 18, 36, 25, 88, 20, 63, 18, 113, 41, 19, 33, 20, 30)
+  ),
+  `March` = data.frame(
+    Region = c("Vinnytsia", "Volyn", "Dnipropetrovsk", "Donetsk", "Zhytomyr", "Zakarpattia", "Zaporizhzhia", "Ivano-Frankivsk", "Kyiv", "Kirovohrad", "Lviv", "Mykolaiv", "Odesa", "Poltava", "Rivne", "Sumy", "Ternopil", "Kharkiv", "Kherson", "Khmelnytskyi ", "Cherkasy ", "Chernivtsi ", "Chernihiv"),
+    Alarm = c(25, 24, 131, 136, 29, 23, 139, 22, 36, 57, 23, 51, 33, 98, 26, 69, 25, 136, 63, 25, 35, 22, 47)
+  ),
+  `April` = data.frame(
+    Region = c("Vinnytsia", "Volyn", "Dnipropetrovsk", "Donetsk", "Zhytomyr", "Zakarpattia", "Zaporizhzhia", "Ivano-Frankivsk", "Kyiv", "Kirovohrad", "Lviv", "Mykolaiv", "Odesa", "Poltava", "Rivne", "Sumy", "Ternopil", "Kharkiv", "Kherson", "Khmelnytskyi ", "Cherkasy ", "Chernivtsi ", "Chernihiv"),
+    Alarm = c(6, 5, 64, 181, 8, 5, 110, 5, 9, 14, 6, 26, 13, 42, 5, 70, 6, 93, 55, 5, 10, 5, 40)
+  ),
+  `May` = data.frame(
+    Region = c("Vinnytsia", "Volyn", "Dnipropetrovsk", "Donetsk", "Zhytomyr", "Zakarpattia", "Zaporizhzhia", "Ivano-Frankivsk", "Kyiv", "Kirovohrad", "Lviv", "Mykolaiv", "Odesa", "Poltava", "Rivne", "Sumy", "Ternopil", "Kharkiv", "Kherson", "Khmelnytskyi ", "Cherkasy ", "Chernivtsi ", "Chernihiv"),
+    Alarm = c(29, 18, 119, 201, 29, 16, 141, 17, 33, 48, 16, 48, 29, 76, 21, 83, 19, 130, 82, 21, 38, 18, 61)
+  ),
+  `June` = data.frame(
+    Region = c("Vinnytsia", "Volyn", "Dnipropetrovsk", "Donetsk", "Zhytomyr", "Zakarpattia", "Zaporizhzhia", "Ivano-Frankivsk", "Kyiv", "Kirovohrad", "Lviv", "Mykolaiv", "Odesa", "Poltava", "Rivne", "Sumy", "Ternopil", "Kharkiv", "Kherson", "Khmelnytskyi ", "Cherkasy ", "Chernivtsi ", "Chernihiv"),
+    Alarm = c(23, 19, 100, 233, 24, 17, 196, 18, 28, 47, 18, 51, 36, 84, 21, 73, 20, 135, 81, 21, 36, 21, 41)
+  ),
+  `July` = data.frame(
+    Region = c("Vinnytsia", "Volyn", "Dnipropetrovsk", "Donetsk", "Zhytomyr", "Zakarpattia", "Zaporizhzhia", "Ivano-Frankivsk", "Kyiv", "Kirovohrad", "Lviv", "Mykolaiv", "Odesa", "Poltava", "Rivne", "Sumy", "Ternopil", "Kharkiv", "Kherson", "Khmelnytskyi ", "Cherkasy ", "Chernivtsi ", "Chernihiv"),
+    Alarm = c(22, 12, 110, 242, 21, 12, 218, 12, 23, 50, 12, 62, 37, 87, 14, 109, 14, 146, 103, 16, 35, 13, 40)
+  ),
+  `August` = data.frame(
+    Region = c("Vinnytsia", "Volyn", "Dnipropetrovsk", "Donetsk", "Zhytomyr", "Zakarpattia", "Zaporizhzhia", "Ivano-Frankivsk", "Kyiv", "Kirovohrad", "Lviv", "Mykolaiv", "Odesa", "Poltava", "Rivne", "Sumy", "Ternopil", "Kharkiv", "Kherson", "Khmelnytskyi ", "Cherkasy ", "Chernivtsi ", "Chernihiv"),
+    Alarm = c(44, 35, 135, 254, 43, 35, 280, 35, 45, 70,  36, 73, 53, 100, 37, 98, 37, 171, 103, 40,  57, 35, 57)
+  ),
+  `September` = data.frame(
+    Region = c("Vinnytsia", "Volyn", "Dnipropetrovsk", "Donetsk", "Zhytomyr", "Zakarpattia", "Zaporizhzhia", "Ivano-Frankivsk", "Kyiv", "Kirovohrad", "Lviv", "Mykolaiv", "Odesa", "Poltava", "Rivne", "Sumy", "Ternopil", "Kharkiv", "Kherson", "Khmelnytskyi ", "Cherkasy ", "Chernivtsi ", "Chernihiv"),
+    Alarm = c(26, 11, 118, 228, 17, 11, 232, 12, 17, 51, 12, 84, 47, 62, 14, 106, 14, 145, 117, 15, 37, 14, 31)
+  ),
+  `October` = data.frame(
+    Region = c("Vinnytsia", "Volyn", "Dnipropetrovsk", "Donetsk", "Zhytomyr", "Zakarpattia", "Zaporizhzhia", "Ivano-Frankivsk", "Kyiv", "Kirovohrad", "Lviv", "Mykolaiv", "Odesa", "Poltava", "Rivne", "Sumy", "Ternopil", "Kharkiv", "Kherson", "Khmelnytskyi ", "Cherkasy ", "Chernivtsi ", "Chernihiv"),
+    Alarm = c(18, 3, 152, 209, 11, 0, 198, 2, 6, 79, 0, 155, 38, 68, 3, 94, 7, 181, 204, 13, 38,  6, 36)
+  ),
+  `November` = data.frame(
+    Region = c("Vinnytsia", "Volyn", "Dnipropetrovsk", "Donetsk", "Zhytomyr", "Zakarpattia", "Zaporizhzhia", "Ivano-Frankivsk", "Kyiv", "Kirovohrad", "Lviv", "Mykolaiv", "Odesa", "Poltava", "Rivne", "Sumy", "Ternopil", "Kharkiv", "Kherson", "Khmelnytskyi ", "Cherkasy ", "Chernivtsi ", "Chernihiv"),
+    Alarm = c(25, 12, 141, 148, 19, 9, 159, 12, 23, 68, 13, 99, 50, 50, 14, 68, 20, 137, 147, 23, 38, 14, 48)
+  ),
+  `December` = data.frame(
+    Region = c("Vinnytsia", "Volyn", "Dnipropetrovsk", "Donetsk", "Zhytomyr", "Zakarpattia", "Zaporizhzhia", "Ivano-Frankivsk", "Kyiv", "Kirovohrad", "Lviv", "Mykolaiv", "Odesa", "Poltava", "Rivne", "Sumy", "Ternopil", "Kharkiv", "Kherson", "Khmelnytskyi ", "Cherkasy ", "Chernivtsi ", "Chernihiv"),
+    Alarm = c(55, 24, 152, 146, 39, 22, 142, 24, 37, 107, 24, 126, 59, 53, 26, 50, 28, 135, 151, 51, 59, 25, 49)
+  )
+)
+
+# Переглядаємо таблиці
+for (month in names(data_list)) {
+  cat("### Таблиця: Кількість Повiтряних Тревог по регіонах України за", month, "мiсяць\n")
+  print(kable(data_list[[month]], caption = paste("Кількість Повiтряних Тревог по регіонах України за", month, "мiсяць")))
+  cat("\n\n")
+}
+
+# Об'єднуємо дані для графіка
+combined_data <- bind_rows(
+  lapply(names(data_list), function(month) {
+    data_list[[month]] %>%
+      mutate(Month = month)
+  })
+)
+
+# Перетворюємо місяць в фактор для правильного відображення на осі X
+combined_data$Month <- factor(combined_data$Month, levels = names(data_list))
+
+
+# Графік динаміки повітряних тривог по регіонах
+p <- ggplot(combined_data, aes(x = Month, y = Alarm, group = Region, color = Region)) +
+  geom_line() +
+  geom_point(size = 2/4) +
+  theme_minimal() +
+  labs(
+    title = "Динаміка Повітряних Тривог по регіонах України (за 2023 рік)",
+    x = "Місяць",
+    y = "Кількість Повітряних Тривог"
+  )
+
+print(p)  # Виводимо графік
+
+# Обчислення загальної кількості тривог по всій Україні за кожний місяць
+monthly_totals <- combined_data %>%
+  group_by(Month) %>%
+  summarise(Total_Alarms = sum(Alarm))
+
+# Додаємо колонку з середнім значенням кількості тривог за місяць
+monthly_totals <- monthly_totals %>%
+  mutate(Average_Alarms = mean(Total_Alarms),
+         SD_Alarms = sd(Total_Alarms))
+
+# Виведення таблиці з результатами
+print(kable(monthly_totals, caption = "Загальна кількість тривог по місяцям"))
+
+## Гіпотеза 1: Стабільність рівня повітряних тривог
+#чи можна вважати рівень повітряних тривог по Україні в цілому стабільним протягом досліджуваного періоду?
+p <- ggplot(monthly_totals, aes(x = Month, y = Total_Alarms)) +
+  geom_line(group = 1, color = "blue") +
+  geom_point(size = 3, color = "darkblue") +
+  geom_hline(aes(yintercept = Average_Alarms), linetype = "dashed", color = "red") +
+  geom_ribbon(aes(ymin = Average_Alarms - SD_Alarms, ymax = Average_Alarms + SD_Alarms), 
+              fill = "lightblue", alpha = 0.2) +
+  theme_minimal() +
+  labs(
+    title = "Загальна динаміка повітряних тривог по Україні за 2023 рік",
+    x = "Місяць",
+    y = "Загальна кількість повітряних тривог"
+  )
+
+print(p)
+#Висновок Гiпотези 1: З отриманними данними можна зробити наступнi спостереження: на початку року було збільшення кількості повітряних тривог, але потім у квітні 2023 року впали практично до нуля, потім йшло поступове зростання і піком кількості повітряних тривог був серпень 2023 року, в цьому місяці тенденція на збільшення повітряних тривог у відсотковому співвідношенні в порівнянні з іншими місяцями не відрізняється, але у них значно зросла. До кінця року тенденція почала падати і в повітряних тривог відповідно теж.
+
+##Гiпотеза 2: Регіональні відмінності
+#Чи можна вважати частоту повітряних тривог однаковою в усіх регіонах України? Якщо ні, то в яких регіонах відзначаються найвищі та найнижчі показники? Чи можна визначити зони найбільшого ризику на основі частоти тривог?
+
+# Обчислення загальної кількості тривог по кожному регіону
+regional_totals <- combined_data %>%
+  group_by(Region) %>%
+  summarise(Total_Alarms = sum(Alarm)) %>%
+  arrange(desc(Total_Alarms))
+
+# Додаємо середнє та стандартне відхилення для порівняння
+regional_stats <- regional_totals %>%
+  summarise(
+    Average_Alarms = mean(Total_Alarms),
+    SD_Alarms = sd(Total_Alarms)
+  )
+
+# Виведення таблиці з результатами
+print(kable(regional_totals, caption = "Загальна кількість повітряних тривог по регіонах України"))
+
+# Графік для порівняння частоти тривог по регіонах
+p <- ggplot(regional_totals, aes(x = reorder(Region, Total_Alarms), y = Total_Alarms, fill = Total_Alarms)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  theme_minimal() +
+  labs(
+    title = "Кількість повітряних тривог по регіонах України за 2023 рік",
+    x = "Регіон",
+    y = "Загальна кількість тривог"
+  ) +
+  scale_fill_gradient(low = "lightblue", high = "darkblue") +
+  geom_hline(aes(yintercept = regional_stats$Average_Alarms), color = "red", linetype = "dashed") +
+  geom_text(aes(y = regional_stats$Average_Alarms, label = "Середнє"), x = 1, color = "red", vjust = -0.5)
+
+print(p)
+
+# Визначення регіонів з найвищими та найнижчими показниками
+highest_risk <- regional_totals %>% filter(Total_Alarms == max(Total_Alarms))
+lowest_risk <- regional_totals %>% filter(Total_Alarms == min(Total_Alarms))
+
+cat("Регіон з найвищим ризиком (найбільша кількість тривог):\n")
+print(highest_risk)
+
+cat("\nРегіон з найнижчим ризиком (найменша кількість тривог):\n")
+print(lowest_risk)
+```
