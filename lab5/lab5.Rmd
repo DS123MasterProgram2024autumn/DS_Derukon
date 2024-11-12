@@ -1,0 +1,113 @@
+---
+title: "Лабораторна робота №6. Побудова моделей класифікації"
+author: "[Дарикон А. В.](https://github.com/Artem418k), `r format(Sys.time(), '%Y')`"
+date: "`r Sys.Date()`"
+output:
+#   pdf_document:
+#     highlight: tango
+#     toc: yes
+#   word_document:
+#     highlight: tango
+#     toc: yes
+  html_notebook:
+    toc: yes # генерація змісту документу
+    toc_float: true
+    highlight: monochrome # Колір підсвічування коду
+fontsize: 12pt # розмір шрифту
+header-includes:
+ \usepackage[T2A]{fontenc}
+ \usepackage[utf8]{inputenc}
+editor_options: 
+  chunk_output_type: console # вивід результатів обчислень на консоль
+---
+
+__Мета:__ _Засвоєння базових принципів, знайомство з інструментами та набуття навичок побудови моделей регресії на рівні технології на основи статистичного підходу та моделей машинного навчання засобами мови програмування R та колекції пакетів `dplyr`, `ggplot2`._ 
+
+
+### Індивідуальні завдання на лабораторну роботу
+
+```{r}
+# Завантажуємо необхідні бібліотеки
+library(ggplot2)
+library(tidyverse)
+library(palmerpenguins)
+library(MASS)  # для LDA
+library(readxl)  # для роботи з Excel файлами
+
+# Завантажуємо датасет penguins
+data("penguins")
+
+# Перевіряємо типи даних
+str(penguins)
+
+# Очищаємо дані (видаляємо пропущені значення)
+# Перевіряємо, чи можна застосувати select() коректно
+penguins_clean <- penguins %>%
+  drop_na() %>%
+  dplyr::select(sex, flipper_length_mm, body_mass_g)  # Вказуємо явне ім'я пакету для select
+
+# Перетворюємо стовпець sex на фактор
+penguins_clean$sex <- factor(penguins_clean$sex)
+
+# Перевіряємо результат
+str(penguins_clean)
+head(penguins_clean)
+
+ggplot(penguins_clean, aes(x = sex, y = body_mass_g, fill = sex)) +
+  geom_boxplot() +
+  labs(
+    title = "Розподіл маси тіла пінгвінів за статтю",
+    x = "Стать",
+    y = "Маса тіла (г)"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none")
+# Графік Boxplot для довжини плавця за статтю
+ggplot(penguins_clean, aes(x = sex, y = flipper_length_mm, fill = sex)) +
+  geom_boxplot() +
+  labs(
+    title = "Розподіл довжини плавця пінгвінів за статтю",
+    x = "Стать",
+    y = "Довжина плавця (мм)"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+# Будуємо модель LDA
+lda_model <- lda(sex ~ flipper_length_mm + body_mass_g, data = penguins_clean)
+
+# Переглядаємо результати моделі
+lda_model
+
+# Виконуємо передбачення
+predictions <- predict(lda_model)
+
+# Створюємо таблицю для порівняння реальних і передбачених значень
+comparison <- data.frame(Actual = penguins_clean$sex, Predicted = predictions$class)
+
+# Переглядаємо таблицю
+head(comparison)
+
+# Створюємо графік для порівняння реальних і передбачених значень статі пінгвінів
+ggplot(comparison, aes(x = Predicted, y = Actual)) +
+  geom_jitter(aes(color = Predicted), width = 0.1, height = 0.1, size = 3) +  # Для точок з невеликим випадковим зсувом
+  geom_abline(slope = 0, intercept = 0, linetype = "dashed", color = "red") +  # Лінія ідеального передбачення
+  labs(
+    title = "Порівняння реальних і передбачених значень статі пінгвінів",
+    x = "Передбачене значення",
+    y = "Реальне значення"
+  ) +
+  theme_minimal() +  # Мінімалістичний стиль
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Поворот підписів по осі X для кращої читаємості
+
+# Обчислюємо точність класифікації
+accuracy <- mean(comparison$Actual == comparison$Predicted)
+print(paste("Точність класифікації: ", accuracy))
+
+# Встановлюємо пакет для запису в Excel
+library(writexl)
+
+# Записуємо результати в Excel файл
+write_xlsx(comparison, "hx.xlsx")
+
+```
