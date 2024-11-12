@@ -1,0 +1,211 @@
+---
+title: "Lab_3_Derukon"
+date: "12/11/2024"
+output:
+#   pdf_document:
+#     highlight: tango
+#     toc: yes
+#   word_document:
+#     highlight: tango
+#     toc: yes
+  html_notebook:
+    toc: yes # генерація змісту документу
+    toc_float: true
+    highlight: pygments # Колір підсвічування коду
+fontsize: 12pt # розмір шрифту
+header-includes:
+ \usepackage[T2A]{fontenc}
+ \usepackage[utf8]{inputenc}
+editor_options: 
+  chunk_output_type: console # вивід результатів обчислень на консоль
+---
+```{r setup, include=FALSE}
+# Встановлюємо налаштування для RMarkdown
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+
+# Завантаження необхідних бібліотек
+library(dplyr)
+library(ggplot2)
+library(knitr)  # Додаємо бібліотеку для kable
+library(kableExtra)
+library(factoextra)
+library(tibble)  # для роботи з таблицями
+library(mlbench) # для доступу до датасету PimaIndiansDiabetes
+```
+```{r}
+# Cайт:  https://alerts.in.ua/
+# Даннi по Повiтрянним Тревогам по Українi за 2023 роки
+data_list <- list(
+  `January` = data.frame(
+    Region = c("Vinnytsia", "Volyn", "Dnipropetrovsk", "Donetsk", "Zhytomyr", "Zakarpattia", "Zaporizhzhia", "Ivano-Frankivsk", "Kyiv", "Kirovohrad", "Lviv", "Mykolaiv", "Odesa", "Poltava", "Rivne", "Sumy", "Ternopil", "Kharkiv", "Kherson", "Khmelnytskyi ", "Cherkasy ", "Chernivtsi ", "Chernihiv"),
+    Alarm = c(15, 16, 102, 118, 17, 13, 106, 13, 18, 49, 13, 41, 23, 77, 15, 44, 13, 115, 43, 13, 26, 13, 13)
+  ),
+  `February` = data.frame(
+    Region = c("Vinnytsia", "Volyn", "Dnipropetrovsk", "Donetsk", "Zhytomyr", "Zakarpattia", "Zaporizhzhia", "Ivano-Frankivsk", "Kyiv", "Kirovohrad", "Lviv", "Mykolaiv", "Odesa", "Poltava", "Rivne", "Sumy", "Ternopil", "Kharkiv", "Kherson", "Khmelnytskyi ", "Cherkasy ", "Chernivtsi ", "Chernihiv"),
+    Alarm = c(23, 19, 110, 143, 21, 18, 101, 18, 27, 49, 18, 36, 25, 88, 20, 63, 18, 113, 41, 19, 33, 20, 30)
+  ),
+  `March` = data.frame(
+    Region = c("Vinnytsia", "Volyn", "Dnipropetrovsk", "Donetsk", "Zhytomyr", "Zakarpattia", "Zaporizhzhia", "Ivano-Frankivsk", "Kyiv", "Kirovohrad", "Lviv", "Mykolaiv", "Odesa", "Poltava", "Rivne", "Sumy", "Ternopil", "Kharkiv", "Kherson", "Khmelnytskyi ", "Cherkasy ", "Chernivtsi ", "Chernihiv"),
+    Alarm = c(25, 24, 131, 136, 29, 23, 139, 22, 36, 57, 23, 51, 33, 98, 26, 69, 25, 136, 63, 25, 35, 22, 47)
+  ),
+  `April` = data.frame(
+    Region = c("Vinnytsia", "Volyn", "Dnipropetrovsk", "Donetsk", "Zhytomyr", "Zakarpattia", "Zaporizhzhia", "Ivano-Frankivsk", "Kyiv", "Kirovohrad", "Lviv", "Mykolaiv", "Odesa", "Poltava", "Rivne", "Sumy", "Ternopil", "Kharkiv", "Kherson", "Khmelnytskyi ", "Cherkasy ", "Chernivtsi ", "Chernihiv"),
+    Alarm = c(6, 5, 64, 181, 8, 5, 110, 5, 9, 14, 6, 26, 13, 42, 5, 70, 6, 93, 55, 5, 10, 5, 40)
+  ),
+  `May` = data.frame(
+    Region = c("Vinnytsia", "Volyn", "Dnipropetrovsk", "Donetsk", "Zhytomyr", "Zakarpattia", "Zaporizhzhia", "Ivano-Frankivsk", "Kyiv", "Kirovohrad", "Lviv", "Mykolaiv", "Odesa", "Poltava", "Rivne", "Sumy", "Ternopil", "Kharkiv", "Kherson", "Khmelnytskyi ", "Cherkasy ", "Chernivtsi ", "Chernihiv"),
+    Alarm = c(29, 18, 119, 201, 29, 16, 141, 17, 33, 48, 16, 48, 29, 76, 21, 83, 19, 130, 82, 21, 38, 18, 61)
+  ),
+  `June` = data.frame(
+    Region = c("Vinnytsia", "Volyn", "Dnipropetrovsk", "Donetsk", "Zhytomyr", "Zakarpattia", "Zaporizhzhia", "Ivano-Frankivsk", "Kyiv", "Kirovohrad", "Lviv", "Mykolaiv", "Odesa", "Poltava", "Rivne", "Sumy", "Ternopil", "Kharkiv", "Kherson", "Khmelnytskyi ", "Cherkasy ", "Chernivtsi ", "Chernihiv"),
+    Alarm = c(23, 19, 100, 233, 24, 17, 196, 18, 28, 47, 18, 51, 36, 84, 21, 73, 20, 135, 81, 21, 36, 21, 41)
+  ),
+  `July` = data.frame(
+    Region = c("Vinnytsia", "Volyn", "Dnipropetrovsk", "Donetsk", "Zhytomyr", "Zakarpattia", "Zaporizhzhia", "Ivano-Frankivsk", "Kyiv", "Kirovohrad", "Lviv", "Mykolaiv", "Odesa", "Poltava", "Rivne", "Sumy", "Ternopil", "Kharkiv", "Kherson", "Khmelnytskyi ", "Cherkasy ", "Chernivtsi ", "Chernihiv"),
+    Alarm = c(22, 12, 110, 242, 21, 12, 218, 12, 23, 50, 12, 62, 37, 87, 14, 109, 14, 146, 103, 16, 35, 13, 40)
+  ),
+  `August` = data.frame(
+    Region = c("Vinnytsia", "Volyn", "Dnipropetrovsk", "Donetsk", "Zhytomyr", "Zakarpattia", "Zaporizhzhia", "Ivano-Frankivsk", "Kyiv", "Kirovohrad", "Lviv", "Mykolaiv", "Odesa", "Poltava", "Rivne", "Sumy", "Ternopil", "Kharkiv", "Kherson", "Khmelnytskyi ", "Cherkasy ", "Chernivtsi ", "Chernihiv"),
+    Alarm = c(44, 35, 135, 254, 43, 35, 280, 35, 45, 70,  36, 73, 53, 100, 37, 98, 37, 171, 103, 40,  57, 35, 57)
+  ),
+  `September` = data.frame(
+    Region = c("Vinnytsia", "Volyn", "Dnipropetrovsk", "Donetsk", "Zhytomyr", "Zakarpattia", "Zaporizhzhia", "Ivano-Frankivsk", "Kyiv", "Kirovohrad", "Lviv", "Mykolaiv", "Odesa", "Poltava", "Rivne", "Sumy", "Ternopil", "Kharkiv", "Kherson", "Khmelnytskyi ", "Cherkasy ", "Chernivtsi ", "Chernihiv"),
+    Alarm = c(26, 11, 118, 228, 17, 11, 232, 12, 17, 51, 12, 84, 47, 62, 14, 106, 14, 145, 117, 15, 37, 14, 31)
+  ),
+  `October` = data.frame(
+    Region = c("Vinnytsia", "Volyn", "Dnipropetrovsk", "Donetsk", "Zhytomyr", "Zakarpattia", "Zaporizhzhia", "Ivano-Frankivsk", "Kyiv", "Kirovohrad", "Lviv", "Mykolaiv", "Odesa", "Poltava", "Rivne", "Sumy", "Ternopil", "Kharkiv", "Kherson", "Khmelnytskyi ", "Cherkasy ", "Chernivtsi ", "Chernihiv"),
+    Alarm = c(18, 3, 152, 209, 11, 0, 198, 2, 6, 79, 0, 155, 38, 68, 3, 94, 7, 181, 204, 13, 38,  6, 36)
+  ),
+  `November` = data.frame(
+    Region = c("Vinnytsia", "Volyn", "Dnipropetrovsk", "Donetsk", "Zhytomyr", "Zakarpattia", "Zaporizhzhia", "Ivano-Frankivsk", "Kyiv", "Kirovohrad", "Lviv", "Mykolaiv", "Odesa", "Poltava", "Rivne", "Sumy", "Ternopil", "Kharkiv", "Kherson", "Khmelnytskyi ", "Cherkasy ", "Chernivtsi ", "Chernihiv"),
+    Alarm = c(25, 12, 141, 148, 19, 9, 159, 12, 23, 68, 13, 99, 50, 50, 14, 68, 20, 137, 147, 23, 38, 14, 48)
+  ),
+  `December` = data.frame(
+    Region = c("Vinnytsia", "Volyn", "Dnipropetrovsk", "Donetsk", "Zhytomyr", "Zakarpattia", "Zaporizhzhia", "Ivano-Frankivsk", "Kyiv", "Kirovohrad", "Lviv", "Mykolaiv", "Odesa", "Poltava", "Rivne", "Sumy", "Ternopil", "Kharkiv", "Kherson", "Khmelnytskyi ", "Cherkasy ", "Chernivtsi ", "Chernihiv"),
+    Alarm = c(55, 24, 152, 146, 39, 22, 142, 24, 37, 107, 24, 126, 59, 53, 26, 50, 28, 135, 151, 51, 59, 25, 49)
+  )
+)
+
+# Объединение даних по місяцям у загальний датафрейм для подальшого аналізу
+combined_data <- bind_rows(
+  lapply(names(data_list), function(month) {
+    data_list[[month]] %>%
+      mutate(Month = month)
+  })
+)
+
+# Перетворюємо місяць в фактор для правильного відображення на осі X
+combined_data$Month <- factor(combined_data$Month, levels = names(data_list))
+
+# 1. Перевірка комплектності даних
+# 1_1. Перевірка на пропущені значення
+missing_values <- combined_data %>%
+  summarise_all(~sum(is.na(.)))
+
+cat("Кількість пропущених значень по кожній колонці:\n")
+print(kable(missing_values, caption = "Пропущені значення по колонкам"))
+
+# 1_2. Перевірка наявності всіх регіонів для кожного місяця
+regions_by_month <- combined_data %>%
+  group_by(Month) %>%
+  summarise(Number_of_Regions = n_distinct(Region))
+
+cat("\nКількість регіонів, представлених у кожному місяці:\n")
+print(kable(regions_by_month, caption = "Кількість регіонів по місяцях"))
+
+# Виявлення можливих аномалій
+# Визначаємо місяці з незвично високою або низькою кількістю тривог (досліджуємо кількісно)
+alarm_summary <- combined_data %>%
+  group_by(Month) %>%
+  summarise(Total_Alarms = sum(Alarm),
+            Average_Alarms = mean(Alarm),
+            SD_Alarms = sd(Alarm))
+
+cat("\nЗагальна кількість тривог та середні значення по місяцях:\n")
+print(kable(alarm_summary, caption = "Статистика тривог по місяцях"))
+
+# 2. Гістограма кількості повiтрянних тревог по регіонах
+# Побудова загальної гістограми
+ggplot(combined_data, aes(x = Alarm)) +
+  geom_histogram(binwidth = 10, fill = "skyblue", color = "black") +
+  theme_minimal() +
+  labs(
+    title = "Гістограма кількості повітряних тривог по регіонах",
+    x = "Кількість тривог",
+    y = "Частота"
+  )
+
+#Тест на нормальність (критерій Шапіро-Уілка) для кожного регіону
+# Виконуємо тест Шапіро-Уілка для кожного регіону і збираємо результати в таблицю
+shapiro_results <- combined_data %>%
+  group_by(Region) %>%
+  summarise(
+    W_statistic = shapiro.test(Alarm)$statistic,
+    p_value = shapiro.test(Alarm)$p.value
+  )
+
+# Додаємо інтерпретацію результатів
+shapiro_results <- shapiro_results %>%
+  mutate(
+    Normality = ifelse(p_value > 0.05, "Нормальний розподіл", "Ненормальний розподіл")
+  )
+
+# Виведення таблиці результатів тесту Шапіро-Уілка
+cat("Результати тесту Шапіро-Уілка для нормальності розподілу тривог по регіонах:\n")
+print(shapiro_results)
+
+# 3. Аналіз зв'язку між характеристиками
+# Кореляційний аналіз між мiсяцем та кількістю Повiтрянних Тревог
+
+combined_data <- combined_data %>%
+  mutate(Month_numeric = as.numeric(Month))
+
+# 1. Кореляційний аналіз між місяцем та кількістю повітряних тривог
+correlation_result <- cor.test(combined_data$Month_numeric, combined_data$Alarm)
+
+# Виведення результатів кореляційного аналізу
+cat("Кореляційний аналіз між місяцем та кількістю повітряних тривог:\n")
+cat("Коефіцієнт кореляції (Pearson):", round(correlation_result$estimate, 2), "\n")
+cat("p-значення:", round(correlation_result$p.value, 4), "\n")
+if (correlation_result$p.value < 0.05) {
+  cat("Висновок: Є статистично значущий зв'язок між місяцем та кількістю тривог.\n")
+} else {
+  cat("Висновок: Немає статистично значущого зв'язку між місяцем та кількістю тривог.\n")
+}
+
+#Графік розсіювання для перевірки зв'язку між місяцем та кількістю повітряних тривог
+p <- ggplot(combined_data, aes(x = Month_numeric, y = Alarm)) +
+  geom_point(color = "blue", alpha = 0.6) +
+  geom_smooth(method = "lm", color = "red", se = FALSE) +
+  theme_minimal() +
+  labs(
+    title = "Графік розсіювання: Зв'язок між місяцем та кількістю повітряних тривог",
+    x = "Місяць (як числова змінна)",
+    y = "Кількість повітряних тривог"
+  )
+
+print(p)
+
+##Індивідуальне завдання
+#
+# Завантажуємо дані
+data(PimaIndiansDiabetes)
+
+# Перетворюємо дані у формат tibble для зручного перегляду
+diabetes_data <- as_tibble(PimaIndiansDiabetes)
+
+# Переглядаємо перші кілька рядків даних
+head(diabetes_data)
+
+# Будуємо модель парної лінійної регресії для залежності артеріального тиску (pressure) від віку (age)
+model <- lm(pressure ~ age, data = diabetes_data)
+
+# Виводимо результати моделі
+summary(model)
+
+# Побудуємо графік розсіювання та накладемо лінію регресії
+plot(diabetes_data$age, diabetes_data$pressure, 
+     main = "Залежність артеріального тиску від віку",
+     xlab = "Вік", ylab = "Артеріальний тиск")
+abline(model, col = "blue", lwd = 2)
+```
